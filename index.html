@@ -68,6 +68,7 @@ label.chk{display:flex;gap:8px;align-items:center;color:var(--mu);font-size:14px
 .lis{position:absolute;left:6px;bottom:6px;background:rgba(0,0,0,.75);padding:3px 10px;border-radius:14px;font-size:12px}
 body.hasp{padding-bottom:calc(125px + env(safe-area-inset-bottom,0px))}
 .inp{display:block;width:100%;margin:0 0 8px;background:var(--sf);color:var(--tx);border:1px solid var(--sf2);border-radius:var(--r);padding:10px;font-size:16px}
+.dur:empty{display:none}
 </style>
 </head>
 <body>
@@ -125,13 +126,15 @@ async function api(p){
   throw new Error('Không kết nối được máy chủ nào. YouTube có thể đang chặn, thử lại sau hoặc vào Cài đặt để đổi máy chủ.');
 }
 
+let SHORTS=false;
 function item(v){
   if(!v||!v.url)return'';
+  if(v.isShort&&!SHORTS)return'';
   if(v.url.startsWith('/channel/'))
     return `<a class="row ch" href="#/channel/${esc(v.url.slice(9))}"><img class="av" src="${esc(v.thumbnail)}"><div><div class="t">${esc(v.name)}</div><div class="s">${v.subscribers>0?fmtN(v.subscribers)+' người đăng ký':'Kênh'}</div></div></a>`;
   const id=vid(v.url);if(!id)return'';const th='https://i.ytimg.com/vi/'+id+'/mqdefault.jpg';
   const views=v.views>=0?fmtN(v.views)+' lượt xem':'';
-  return `<a class="card" href="#/watch/${esc(id)}" data-id="${esc(id)}" data-t="${esc(v.title)}" data-u="${esc(v.uploaderName)}" data-th="${esc(th)}"><div class="th"><img loading="lazy" src="${esc(th)}"><span class="lis">♪ Nghe</span><span class="dur">${v.duration>0?dur(v.duration):'TRỰC TIẾP'}</span></div><div class="meta"><div class="t">${esc(v.title)}</div><div class="s">${esc(v.uploaderName)}${views?' · '+views:''}${v.uploadedDate?' · '+esc(v.uploadedDate):''}</div></div></a>`;
+  return `<a class="card" href="#/watch/${esc(id)}" data-id="${esc(id)}" data-t="${esc(v.title)}" data-u="${esc(v.uploaderName)}" data-th="${esc(th)}"><div class="th"><img loading="lazy" src="${esc(th)}"><span class="lis">♪ Nghe</span><span class="dur">${v.duration>0?dur(v.duration):(v.isShort?'SHORT':'')}</span></div><div class="meta"><div class="t">${esc(v.title)}</div><div class="s">${esc(v.uploaderName)}${views?' · '+views:''}${v.uploadedDate?' · '+esc(v.uploadedDate):''}</div></div></a>`;
 }
 function list(items,np,more){
   const w=document.createElement('div'),g=document.createElement('div');
@@ -169,13 +172,24 @@ async function channel(id){
     const paint=()=>{sb.textContent=on?'Đã đăng ký':'Đăng ký';sb.className='btn'+(on?'':' on')};paint();
     sb.onclick=()=>{let s=LS.get('subs',[]);if(on)s=s.filter(x=>x.id!==id);else s.push({id,name:d.name,avatar:d.avatarUrl});LS.set('subs',s);on=!on;paint()};
     $('#lq').onclick=()=>{unlock();const g=app.querySelector('.grid');if(g)playQ(cardsQ(g),0)};
-    let items=d.relatedStreams||[],np0=d.nextpage;
-    if(!items.length){
-      const tb=(d.tabs||[]).find(x=>x.name==='videos')||(d.tabs||[])[0];
-      if(tb){try{const r=await api('/channels/tabs?data='+encodeURIComponent(tb.data));items=r.content||[];np0=r.nextpage}catch(e){}}
+    SHORTS=false;
+    const tabs=(d.tabs||[]).filter(t=>/^(videos|livestreams|shorts)$/i.test(t.name));
+    const lab={videos:'Video',livestreams:'Trực tiếp',shorts:'Shorts'};
+    const chips=document.createElement('div'),holder=document.createElement('div');
+    chips.className='ctl';app.append(chips,holder);
+    const more=np=>api('/nextpage/channel/'+id+'?nextpage='+encodeURIComponent(np)).then(r=>({items:r.relatedStreams||r.content||[],np:r.nextpage}));
+    async function show(tb){
+      chips.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b._t===tb));
+      SHORTS=!!(tb&&/shorts/i.test(tb.name));
+      holder.innerHTML='<div class="msg">Đang tải…</div>';
+      let items=[],np0=null;
+      try{if(tb){const r=await api('/channels/tabs?data='+encodeURIComponent(tb.data));items=r.content||[];np0=r.nextpage}else{items=d.relatedStreams||[];np0=d.nextpage}}catch(e){}
+      holder.innerHTML='';
+      if(!items.filter(v=>v.url&&(!v.isShort||SHORTS)).length){holder.innerHTML='<div class="msg">Không có video nào.<br>Thử lại hoặc chọn mục khác.</div>';return}
+      holder.append(list(items,np0,more));
     }
-    if(!items.length){app.insertAdjacentHTML('beforeend','<div class="msg">Máy chủ chưa trả về video của kênh này.<br>Thử lại hoặc đổi máy chủ trong Cài đặt.</div>');return}
-    app.append(list(items,np0,np=>api('/nextpage/channel/'+id+'?nextpage='+encodeURIComponent(np)).then(r=>({items:r.relatedStreams||r.content||[],np:r.nextpage}))));
+    tabs.forEach(t=>{const b=document.createElement('button');b.className='btn';b._t=t;b.textContent=lab[t.name.toLowerCase()]||t.name;b.onclick=()=>show(t);chips.append(b)});
+    show(tabs.find(t=>/^videos$/i.test(t.name))||tabs[0]||null);
   }catch(e){fail(e,()=>channel(id))}
 }
 async function subsPage(){
@@ -316,7 +330,7 @@ document.addEventListener('click',e=>{
   const card=b.closest('.card');playQ(cardsQ(card.closest('.grid')),[...card.closest('.grid').querySelectorAll('.card')].indexOf(card));
 },true);
 
-function route(){
+function route(){SHORTS=false;
   const [a,...r]=(location.hash.slice(2)||'').split('/'),arg=decodeURIComponent(r.join('/'));
   document.querySelectorAll('nav a').forEach(x=>x.classList.toggle('on',x.dataset.p===a));
   window.scrollTo(0,0);
