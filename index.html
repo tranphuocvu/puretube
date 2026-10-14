@@ -155,7 +155,13 @@ async function channel(id){
     const paint=()=>{sb.textContent=on?'Đã đăng ký':'Đăng ký';sb.className='btn'+(on?'':' on')};paint();
     sb.onclick=()=>{let s=LS.get('subs',[]);if(on)s=s.filter(x=>x.id!==id);else s.push({id,name:d.name,avatar:d.avatarUrl});LS.set('subs',s);on=!on;paint()};
     $('#lq').onclick=()=>{unlock();const g=app.querySelector('.grid');if(g)playQ(cardsQ(g),0)};
-    app.append(list(d.relatedStreams||[],d.nextpage,np=>api('/nextpage/channel/'+id+'?nextpage='+encodeURIComponent(np)).then(r=>({items:r.relatedStreams||[],np:r.nextpage}))));
+    let items=d.relatedStreams||[],np0=d.nextpage;
+    if(!items.length){
+      const tb=(d.tabs||[]).find(x=>x.name==='videos')||(d.tabs||[])[0];
+      if(tb){try{const r=await api('/channels/tabs?data='+encodeURIComponent(tb.data));items=r.content||[];np0=r.nextpage}catch(e){}}
+    }
+    if(!items.length){app.insertAdjacentHTML('beforeend','<div class="msg">Máy chủ chưa trả về video của kênh này.<br>Thử lại hoặc đổi máy chủ trong Cài đặt.</div>');return}
+    app.append(list(items,np0,np=>api('/nextpage/channel/'+id+'?nextpage='+encodeURIComponent(np)).then(r=>({items:r.relatedStreams||r.content||[],np:r.nextpage}))));
   }catch(e){fail(e,()=>channel(id))}
 }
 async function subsPage(){
