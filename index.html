@@ -69,6 +69,7 @@ label.chk{display:flex;gap:8px;align-items:center;color:var(--mu);font-size:14px
 body.hasp{padding-bottom:calc(125px + env(safe-area-inset-bottom,0px))}
 .inp{display:block;width:100%;margin:0 0 8px;background:var(--sf);color:var(--tx);border:1px solid var(--sf2);border-radius:var(--r);padding:10px;font-size:16px}
 .dur:empty{display:none}
+.grid .row.ch{grid-column:1/-1}
 </style>
 </head>
 <body>
@@ -127,6 +128,10 @@ async function api(p){
 }
 
 let SHORTS=false;
+const UN={second:'giây',minute:'phút',hour:'giờ',day:'ngày',week:'tuần',month:'tháng',year:'năm'};
+const viRel=s=>String(s||'').replace(/^Streamed\s+/i,'Phát trực tiếp ').replace(/(\d+)\s+(second|minute|hour|day|week|month|year)s?\s+ago/i,(m,n,u)=>n+' '+UN[u.toLowerCase()]+' trước');
+const dt=v=>{const t=v.uploaded>0?new Date(v.uploaded).toLocaleDateString('vi-VN'):'',r=viRel(v.uploadedDate);return t||r?' · '+(t?t+(r?' · '+r:''):r):''};
+const sortNew=g=>{if(!g)return;[...g.querySelectorAll('.card')].sort((a,b)=>b.dataset.up-a.dataset.up).forEach(c=>g.append(c))};
 function item(v){
   if(!v||!v.url)return'';
   if(v.isShort&&!SHORTS)return'';
@@ -134,7 +139,7 @@ function item(v){
     return `<a class="row ch" href="#/channel/${esc(v.url.slice(9))}"><img class="av" src="${esc(v.thumbnail)}"><div><div class="t">${esc(v.name)}</div><div class="s">${v.subscribers>0?fmtN(v.subscribers)+' người đăng ký':'Kênh'}</div></div></a>`;
   const id=vid(v.url);if(!id)return'';const th='https://i.ytimg.com/vi/'+id+'/mqdefault.jpg';
   const views=v.views>=0?fmtN(v.views)+' lượt xem':'';
-  return `<a class="card" href="#/watch/${esc(id)}" data-id="${esc(id)}" data-t="${esc(v.title)}" data-u="${esc(v.uploaderName)}" data-th="${esc(th)}"><div class="th"><img loading="lazy" src="${esc(th)}"><span class="lis">♪ Nghe</span><span class="dur">${v.duration>0?dur(v.duration):(v.isShort?'SHORT':'')}</span></div><div class="meta"><div class="t">${esc(v.title)}</div><div class="s">${esc(v.uploaderName)}${views?' · '+views:''}${v.uploadedDate?' · '+esc(v.uploadedDate):''}</div></div></a>`;
+  return `<a class="card" href="#/watch/${esc(id)}" data-id="${esc(id)}" data-up="${v.uploaded>0?v.uploaded:0}" data-t="${esc(v.title)}" data-u="${esc(v.uploaderName)}" data-th="${esc(th)}"><div class="th"><img loading="lazy" src="${esc(th)}"><span class="lis">♪ Nghe</span><span class="dur">${v.duration>0?dur(v.duration):(v.isShort?'SHORT':'')}</span></div><div class="meta"><div class="t">${esc(v.title)}</div><div class="s">${esc(v.uploaderName)}${views?' · '+views:''}${esc(dt(v))}</div></div></a>`;
 }
 function list(items,np,more){
   const w=document.createElement('div'),g=document.createElement('div');
@@ -159,6 +164,7 @@ async function search(q){
   try{
     const j=await api('/search?q='+encodeURIComponent(q)+'&filter=all');
     app.innerHTML='';
+    const sb=document.createElement('button');sb.className='btn';sb.style.marginBottom='12px';sb.textContent='Sắp xếp: mới nhất';sb.onclick=()=>sortNew(app.querySelector('.grid'));app.append(sb);
     app.append(list(j.items||[],j.nextpage,np=>api('/nextpage/search?nextpage='+encodeURIComponent(np)+'&q='+encodeURIComponent(q)+'&filter=all').then(r=>({items:r.items||[],np:r.nextpage}))));
   }catch(e){fail(e,()=>search(q))}
 }
@@ -184,6 +190,7 @@ async function channel(id){
       holder.innerHTML='<div class="msg">Đang tải…</div>';
       let items=[],np0=null;
       try{if(tb){const r=await api('/channels/tabs?data='+encodeURIComponent(tb.data));items=r.content||[];np0=r.nextpage}else{items=d.relatedStreams||[];np0=d.nextpage}}catch(e){}
+      if(items.length&&items.every(v=>v.uploaded>0))items.sort((a,b)=>b.uploaded-a.uploaded);
       holder.innerHTML='';
       if(!items.filter(v=>v.url&&(!v.isShort||SHORTS)).length){holder.innerHTML='<div class="msg">Không có video nào.<br>Thử lại hoặc chọn mục khác.</div>';return}
       holder.append(list(items,np0,more));
