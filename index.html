@@ -97,18 +97,31 @@ const fmtN=n=>n>=1e9?(n/1e9).toFixed(1)+' tỷ':n>=1e6?(n/1e6).toFixed(1)+' tr':
 const dur=s=>{s=Math.floor(s);const h=Math.floor(s/3600),m=Math.floor(s%3600/60),c=s%60,p=n=>String(n).padStart(2,'0');return h?`${h}:${p(m)}:${p(c)}`:`${m}:${p(c)}`};
 const vid=u=>((u||'').match(/[?&]v=([^&]+)/)||[])[1];
 
+async function refreshInst(){
+  const r=await fetch('https://piped-instances.kavin.rocks/');const j=await r.json();
+  const n=j.map(x=>x.api_url).filter(Boolean).slice(0,10);
+  inst=[...new Set([...inst,...n])];LS.set('inst',inst);
+}
+const tryOne=p=>async b=>{
+  const c=new AbortController(),t=setTimeout(()=>c.abort(),8000);
+  try{const r=await fetch(b+p,{signal:c.signal});if(!r.ok)throw 0;const j=await r.json();if(j&&j.error)throw 0;return{b,j}}
+  finally{clearTimeout(t)}
+};
 async function api(p){
-  for(const b of [...inst]){
-    try{
-      const c=new AbortController(),t=setTimeout(()=>c.abort(),9000);
-      const r=await fetch(b+p,{signal:c.signal});clearTimeout(t);
-      if(!r.ok)throw 0;
-      const j=await r.json();if(j&&j.error)throw 0;
-      if(inst[0]!==b){inst=[b,...inst.filter(x=>x!==b)];LS.set('inst',inst)}
-      return j;
-    }catch(e){}
+  const tried=new Set();
+  for(let round=0;round<2;round++){
+    const l=inst.filter(x=>!tried.has(x));
+    for(let i=0;i<l.length;i+=4){
+      const g=l.slice(i,i+4);g.forEach(x=>tried.add(x));
+      try{
+        const{b,j}=await Promise.any(g.map(tryOne(p)));
+        if(inst[0]!==b){inst=[b,...inst.filter(x=>x!==b)];LS.set('inst',inst)}
+        return j;
+      }catch(e){}
+    }
+    if(round===0){try{await refreshInst()}catch(e){break}}
   }
-  throw new Error('Không kết nối được máy chủ nào. Vào Cài đặt để đổi máy chủ.');
+  throw new Error('Không kết nối được máy chủ nào. YouTube có thể đang chặn, thử lại sau hoặc vào Cài đặt để đổi máy chủ.');
 }
 
 function item(v){
