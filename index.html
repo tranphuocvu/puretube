@@ -67,6 +67,7 @@ label.chk{display:flex;gap:8px;align-items:center;color:var(--mu);font-size:14px
 .mpb button{background:none;border:0;color:var(--tx);font-size:22px;width:40px;height:40px}
 .lis{position:absolute;left:6px;bottom:6px;background:rgba(0,0,0,.75);padding:3px 10px;border-radius:14px;font-size:12px}
 body.hasp{padding-bottom:calc(125px + env(safe-area-inset-bottom,0px))}
+.inp{display:block;width:100%;margin:0 0 8px;background:var(--sf);color:var(--tx);border:1px solid var(--sf2);border-radius:var(--r);padding:10px;font-size:16px}
 </style>
 </head>
 <body>
@@ -128,9 +129,9 @@ function item(v){
   if(!v||!v.url)return'';
   if(v.url.startsWith('/channel/'))
     return `<a class="row ch" href="#/channel/${esc(v.url.slice(9))}"><img class="av" src="${esc(v.thumbnail)}"><div><div class="t">${esc(v.name)}</div><div class="s">${v.subscribers>0?fmtN(v.subscribers)+' người đăng ký':'Kênh'}</div></div></a>`;
-  const id=vid(v.url);if(!id)return'';
+  const id=vid(v.url);if(!id)return'';const th='https://i.ytimg.com/vi/'+id+'/mqdefault.jpg';
   const views=v.views>=0?fmtN(v.views)+' lượt xem':'';
-  return `<a class="card" href="#/watch/${esc(id)}" data-id="${esc(id)}" data-t="${esc(v.title)}" data-u="${esc(v.uploaderName)}" data-th="${esc(v.thumbnail)}"><div class="th"><img loading="lazy" src="${esc(v.thumbnail)}"><span class="lis">♪ Nghe</span><span class="dur">${v.duration>0?dur(v.duration):'TRỰC TIẾP'}</span></div><div class="meta"><div class="t">${esc(v.title)}</div><div class="s">${esc(v.uploaderName)}${views?' · '+views:''}${v.uploadedDate?' · '+esc(v.uploadedDate):''}</div></div></a>`;
+  return `<a class="card" href="#/watch/${esc(id)}" data-id="${esc(id)}" data-t="${esc(v.title)}" data-u="${esc(v.uploaderName)}" data-th="${esc(th)}"><div class="th"><img loading="lazy" src="${esc(th)}"><span class="lis">♪ Nghe</span><span class="dur">${v.duration>0?dur(v.duration):'TRỰC TIẾP'}</span></div><div class="meta"><div class="t">${esc(v.title)}</div><div class="s">${esc(v.uploaderName)}${views?' · '+views:''}${v.uploadedDate?' · '+esc(v.uploadedDate):''}</div></div></a>`;
 }
 function list(items,np,more){
   const w=document.createElement('div'),g=document.createElement('div');
@@ -194,7 +195,7 @@ function historyPage(){
   app.append(list(h,null));
 }
 function settings(){
-  app.innerHTML=`<h2>Máy chủ Piped</h2><div class="s" style="margin-bottom:8px">Mỗi dòng một địa chỉ API. App thử lần lượt từ trên xuống.</div><textarea id="ins">${esc(inst.join('\n'))}</textarea><div class="ctl"><button class="btn on" id="sv">Lưu</button><button class="btn" id="up">Lấy danh sách mới</button><button class="btn" id="rs">Mặc định</button></div><div class="s" id="st"></div><h2 style="margin-top:20px">Phát video</h2><label class="chk"><input type="checkbox" id="au"> Tự phát video tiếp theo</label>`;
+  app.innerHTML=`<h2>Máy chủ Piped</h2><div class="s" style="margin-bottom:8px">Mỗi dòng một địa chỉ API. App thử lần lượt từ trên xuống.</div><textarea id="ins">${esc(inst.join('\n'))}</textarea><div class="ctl"><button class="btn on" id="sv">Lưu</button><button class="btn" id="up">Lấy danh sách mới</button><button class="btn" id="rs">Mặc định</button></div><div class="s" id="st"></div><h2 style="margin-top:20px">Máy chủ riêng (ở nhà)</h2><div class="s" style="margin-bottom:8px">Nếu điền, app lấy video qua máy chủ này thay vì Piped.</div><input class="inp" id="hu" placeholder="Địa chỉ, ví dụ https://ten-may.ts.net" autocapitalize="off" autocorrect="off"><input class="inp" id="hk" placeholder="Mã bí mật" autocapitalize="off" autocorrect="off"><div class="ctl"><button class="btn on" id="hs">Lưu</button><button class="btn" id="ht">Kiểm tra</button><button class="btn" id="hx">Xóa</button></div><div class="s" id="hst"></div><h2 style="margin-top:20px">Phát video</h2><label class="chk"><input type="checkbox" id="au"> Tự phát video tiếp theo</label>`;
   const save=l=>{inst=l.length?l:DEF;LS.set('inst',inst);$('#ins').value=inst.join('\n')};
   $('#sv').onclick=()=>{save($('#ins').value.split('\n').map(x=>x.trim().replace(/\/$/,'')).filter(x=>/^https?:\/\//.test(x)));$('#st').textContent='Đã lưu.'};
   $('#rs').onclick=()=>{save(DEF);$('#st').textContent='Đã đặt lại.'};
@@ -207,11 +208,22 @@ function settings(){
     }catch(e){$('#st').textContent='Không lấy được danh sách. Thử lại sau.'}
   };
   const au=$('#au');au.checked=LS.get('auto',false);au.onchange=()=>LS.set('auto',au.checked);
+  const H0=LS.get('home',null);if(H0){$('#hu').value=H0.url||'';$('#hk').value=H0.key||''}
+  const rd=()=>({url:$('#hu').value.trim().replace(/\/+$/,''),key:$('#hk').value.trim()});
+  $('#hs').onclick=()=>{const h=rd();if(!/^https:\/\//.test(h.url)||!h.key){$('#hst').textContent='Cần địa chỉ bắt đầu bằng https:// và mã bí mật.';return}LS.set('home',h);$('#hst').textContent='Đã lưu.'};
+  $('#hx').onclick=()=>{LS.set('home',null);$('#hu').value='';$('#hk').value='';$('#hst').textContent='Đã xóa, app dùng Piped.'};
+  $('#ht').onclick=async()=>{const h=rd();$('#hst').textContent='Đang kiểm tra…';try{const r=await fetch(hu(h,'/ping'));const j=await r.json();$('#hst').textContent=j.ok?'Kết nối tốt.':(j.error||'Sai mã bí mật.')}catch(e){$('#hst').textContent='Không kết nối được. Kiểm tra địa chỉ và máy chủ ở nhà.'}};
 }
 
+const homeCfg=()=>{const h=LS.get('home',null);return h&&h.url&&h.key?h:null};
+const hu=(h,p)=>h.url+p+(p.includes('?')?'&':'?')+'k='+encodeURIComponent(h.key);
 async function watch(id){
   load();
-  let d;try{d=await api('/streams/'+id)}catch(e){return fail(e,()=>watch(id))}
+  const H=homeCfg();let d;
+  if(H){
+    try{const r=await fetch(hu(H,'/info/'+id));const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||'báo lỗi');d={...j,uploaderUrl:'/channel/'+(j.channelId||'')}}
+    catch(e){return fail(new Error('Máy chủ riêng: '+(e.message||'không kết nối được')),()=>watch(id))}
+  }else{try{d=await api('/streams/'+id)}catch(e){return fail(e,()=>watch(id))}}
   const cid=(d.uploaderUrl||'').replace('/channel/','');
   const vs=(d.videoStreams||[]).filter(s=>!s.videoOnly&&/mp4/.test(s.mimeType||'')).sort((a,b)=>b.height-a.height);
   const au=(d.audioStreams||[]).filter(s=>/mp4/.test(s.mimeType||'')).sort((a,b)=>b.bitrate-a.bitrate)[0];
@@ -219,9 +231,10 @@ async function watch(id){
   if(d.hls)opts.push({k:d.hls,l:'Tự động (HLS)'});
   if(au)pre[id]=Promise.resolve(au.url);
   const def=(vs.find(s=>s.height<=720)||vs[0]);
-  const start=def?def.url:(d.hls||(au&&au.url)||'');
+  let start=def?def.url:(d.hls||(au&&au.url)||'');
+  if(H){const vu=hu(H,'/stream/'+id+'/video');if(d.hasVideo){opts.push({k:vu,l:'Mặc định'});start=vu}pre[id]=Promise.resolve(hu(H,'/stream/'+id+'/audio'))}
   const rel=d.relatedStreams||[];
-  app.innerHTML=`<div class="watch"><div><video id="pl" controls playsinline autoplay poster="${esc(d.thumbnailUrl)}"></video>
+  app.innerHTML=`<div class="watch"><div><video id="pl" controls playsinline autoplay poster="https://i.ytimg.com/vi/${esc(id)}/hqdefault.jpg"></video>
   <div class="ttl">${esc(d.title)}</div>
   <div class="s">${d.views>=0?fmtN(d.views)+' lượt xem':''}${d.uploadDate?' · '+esc(d.uploadDate):''}</div>
   <div class="who"><img class="av" src="${esc(d.uploaderAvatar)}"><a href="#/channel/${esc(cid)}"><div class="t">${esc(d.uploader)}</div><div class="s">${d.uploaderSubscriberCount>0?fmtN(d.uploaderSubscriberCount)+' người đăng ký':''}</div></a><button class="btn" id="sb"></button></div>
@@ -261,7 +274,11 @@ let Q=[],qi=0,pre={},real='',unl=false,drag=false,retry=false;
 const MS='mediaSession' in navigator;
 const cardsQ=g=>[...g.querySelectorAll('.card')].map(c=>({id:c.dataset.id,t:c.dataset.t,u:c.dataset.u,th:c.dataset.th}));
 const bestA=d=>{const a=d.audioStreams||[];return(a.filter(s=>/mp4|m4a/.test(s.mimeType||'')).sort((x,y)=>y.bitrate-x.bitrate)[0]||a[0]||{}).url};
-const getUrl=id=>pre[id]||(pre[id]=api('/streams/'+id).then(d=>{const u=bestA(d);if(!u)throw new Error('x');return u}).catch(e=>{delete pre[id];throw e}));
+const getUrl=id=>pre[id]||(pre[id]=(async()=>{
+  const H=homeCfg();
+  if(H){const r=await fetch(hu(H,'/info/'+id));const j=await r.json().catch(()=>({}));if(!r.ok||j.error||!j.hasAudio)throw new Error(j.error||'x');return hu(H,'/stream/'+id+'/audio')}
+  const d=await api('/streams/'+id);const u=bestA(d);if(!u)throw new Error('x');return u
+})().catch(e=>{delete pre[id];throw e}));
 function unlock(){if(unl)return;unl=true;ap.src=SIL;ap.play().catch(()=>{})}
 function meta(t){if(MS)navigator.mediaSession.metadata=new MediaMetadata({title:t.t,artist:t.u||'',artwork:t.th?[{src:t.th}]:[]})}
 function playQ(q,i){Q=q;return playAt(i)}
