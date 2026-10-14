@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PureTube">
+<meta name="theme-color" content="#121212">
+<title>PureTube</title>
+<style>
+:root{--bg:#121212;--sf:#1e1e1e;--sf2:#2a2a2a;--tx:#f2f2f2;--mu:#9a9a9a;--ac:#ff4d4d;--r:12px;color-scheme:dark}
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--bg);color:var(--tx);font:15px/1.4 -apple-system,"Segoe UI",Roboto,sans-serif}
+body{padding:calc(56px + env(safe-area-inset-top,0px)) 0 calc(64px + env(safe-area-inset-bottom,0px))}
+a{color:inherit;text-decoration:none}
+header{position:fixed;top:0;left:0;right:0;z-index:5;background:var(--bg);padding:calc(8px + env(safe-area-inset-top,0px)) 12px 8px;display:flex;gap:10px;align-items:center}
+.logo{font-weight:700;font-size:18px;color:var(--ac);white-space:nowrap}
+header form{flex:1;display:flex}
+header input{flex:1;min-width:0;background:var(--sf);border:1px solid var(--sf2);color:var(--tx);padding:9px 14px;border-radius:20px 0 0 20px;font-size:16px;outline:none}
+header input:focus{border-color:var(--ac)}
+header button{background:var(--sf2);border:0;color:var(--tx);padding:0 16px;border-radius:0 20px 20px 0;font-size:15px}
+nav{position:fixed;bottom:0;left:0;right:0;z-index:5;background:var(--bg);border-top:1px solid var(--sf2);display:flex;padding-bottom:env(safe-area-inset-bottom,0px)}
+nav a{flex:1;text-align:center;padding:12px 4px;color:var(--mu);font-size:13px}
+nav a.on{color:var(--ac)}
+main{padding:8px 12px;max-width:1400px;margin:0 auto}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:18px 14px}
+.card .th{position:relative;aspect-ratio:16/9;background:var(--sf);border-radius:var(--r);overflow:hidden}
+.card img{width:100%;height:100%;object-fit:cover;display:block}
+.dur{position:absolute;right:6px;bottom:6px;background:rgba(0,0,0,.8);padding:1px 6px;border-radius:4px;font-size:12px}
+.meta{padding:8px 2px}
+.t{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-weight:600}
+.s{color:var(--mu);font-size:13px;margin-top:2px}
+.row.ch{display:flex;gap:12px;align-items:center;padding:6px 0}
+.av{width:56px;height:56px;border-radius:50%;object-fit:cover;background:var(--sf)}
+.btn{background:var(--sf2);color:var(--tx);border:0;padding:9px 16px;border-radius:20px;font-size:14px}
+.btn.on{background:var(--ac);color:#fff}
+.btn.wide{display:block;margin:18px auto}
+.btn:disabled{opacity:.5}
+.msg{text-align:center;color:var(--mu);padding:48px 16px}
+.msg .btn{margin-top:14px}
+.watch{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:20px}
+@media(max-width:900px){.watch{grid-template-columns:1fr}}
+video{width:100%;aspect-ratio:16/9;background:#000;border-radius:var(--r);display:block}
+.ttl{font-size:18px;font-weight:600;margin:12px 0 4px}
+.who{display:flex;align-items:center;gap:10px;margin:12px 0}
+.who .av{width:40px;height:40px}
+.who>a{flex:1;min-width:0}
+.ctl{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+select{background:var(--sf2);color:var(--tx);border:0;padding:9px 12px;border-radius:20px;font-size:14px}
+.desc{background:var(--sf);border-radius:var(--r);padding:12px;margin-top:10px;white-space:pre-wrap;word-break:break-word;font-size:14px;max-height:90px;overflow:hidden;cursor:pointer}
+.desc.open{max-height:none}
+.side .grid{grid-template-columns:1fr}
+.chead{display:flex;gap:14px;align-items:center;padding:12px 0}
+.chead .av{width:72px;height:72px}
+.chips{display:flex;gap:14px;overflow-x:auto;padding:8px 0 14px}
+.chips a{text-align:center;font-size:12px;width:64px;flex:none}
+.chips .av{width:52px;height:52px;margin:0 auto 4px;display:block}
+h2{font-size:17px;margin:10px 0}
+textarea{width:100%;min-height:120px;background:var(--sf);color:var(--tx);border:1px solid var(--sf2);border-radius:var(--r);padding:10px;font-size:14px}
+label.chk{display:flex;gap:8px;align-items:center;color:var(--mu);font-size:14px}
+#mp{position:fixed;left:0;right:0;bottom:calc(45px + env(safe-area-inset-bottom,0px));z-index:6;background:var(--sf);border-top:1px solid var(--sf2)}
+#mp[hidden]{display:none}
+#mpr{width:100%;display:block;height:16px;margin:0;accent-color:var(--ac)}
+.mpb{display:flex;align-items:center;gap:2px;padding:2px 8px 8px 12px}
+.mpt{flex:1;min-width:0}
+.mpb button{background:none;border:0;color:var(--tx);font-size:22px;width:40px;height:40px}
+.lis{position:absolute;left:6px;bottom:6px;background:rgba(0,0,0,.75);padding:3px 10px;border-radius:14px;font-size:12px}
+body.hasp{padding-bottom:calc(125px + env(safe-area-inset-bottom,0px))}
+</style>
+</head>
+<body>
+<header>
+  <a class="logo" href="#/">PureTube</a>
+  <form id="sf"><input id="q" type="search" placeholder="Tìm kiếm" enterkeyhint="search" autocomplete="off"><button>Tìm</button></form>
+</header>
+<main id="app"></main>
+<audio id="ap" playsinline preload="auto"></audio>
+<div id="mp" hidden>
+  <input id="mpr" type="range" min="0" max="1000" value="0">
+  <div class="mpb"><div class="mpt"><div class="t" id="mpn"></div><div class="s" id="mps"></div></div>
+  <button id="mpv">⏮︎</button><button id="mpp">▶︎</button><button id="mpx">⏭︎</button><button id="mpc">✕</button></div>
+</div>
+<nav>
+  <a href="#/" data-p="">Trang chủ</a>
+  <a href="#/subs" data-p="subs">Đăng ký</a>
+  <a href="#/history" data-p="history">Lịch sử</a>
+  <a href="#/settings" data-p="settings">Cài đặt</a>
+</nav>
+<script>
+const $=s=>document.querySelector(s),app=$('#app');
+const LS={get:(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k));return v==null?d:v}catch{return d}},set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}}};
+const DEF=['https://pipedapi.kavin.rocks','https://api.piped.private.coffee','https://pipedapi.adminforge.de','https://pipedapi.leptons.xyz'];
+let inst=LS.get('inst',DEF);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmtN=n=>n>=1e9?(n/1e9).toFixed(1)+' tỷ':n>=1e6?(n/1e6).toFixed(1)+' tr':n>=1e3?(n/1e3).toFixed(1)+' N':String(n);
+const dur=s=>{s=Math.floor(s);const h=Math.floor(s/3600),m=Math.floor(s%3600/60),c=s%60,p=n=>String(n).padStart(2,'0');return h?`${h}:${p(m)}:${p(c)}`:`${m}:${p(c)}`};
+const vid=u=>((u||'').match(/[?&]v=([^&]+)/)||[])[1];
+
+async function api(p){
+  for(const b of [...inst]){
+    try{
+      const c=new AbortController(),t=setTimeout(()=>c.abort(),9000);
+      const r=await fetch(b+p,{signal:c.signal});clearTimeout(t);
+      if(!r.ok)throw 0;
+      const j=await r.json();if(j&&j.error)throw 0;
+      if(inst[0]!==b){inst=[b,...inst.filter(x=>x!==b)];LS.set('inst',inst)}
+      return j;
+    }catch(e){}
+  }
+  throw new Error('Không kết nối được máy chủ nào. Vào Cài đặt để đổi máy chủ.');
+}
+
+function item(v){
+  if(!v||!v.url)return'';
+  if(v.url.startsWith('/channel/'))
+    return `<a class="row ch" href="#/channel/${esc(v.url.slice(9))}"><img class="av" src="${esc(v.thumbnail)}"><div><div class="t">${esc(v.name)}</div><div class="s">${v.subscribers>0?fmtN(v.subscribers)+' người đăng ký':'Kênh'}</div></div></a>`;
+  const id=vid(v.url);if(!id)return'';
+  const views=v.views>=0?fmtN(v.views)+' lượt xem':'';
+  return `<a class="card" href="#/watch/${esc(id)}" data-id="${esc(id)}" data-t="${esc(v.title)}" data-u="${esc(v.uploaderName)}" data-th="${esc(v.thumbnail)}"><div class="th"><img loading="lazy" src="${esc(v.thumbnail)}"><span class="lis">♪ Nghe</span><span class="dur">${v.duration>0?dur(v.duration):'TRỰC TIẾP'}</span></div><div class="meta"><div class="t">${esc(v.title)}</div><div class="s">${esc(v.uploaderName)}${views?' · '+views:''}${v.uploadedDate?' · '+esc(v.uploadedDate):''}</div></div></a>`;
+}
+function list(items,np,more){
+  const w=document.createElement('div'),g=document.createElement('div');
+  g.className='grid';g.innerHTML=items.map(item).join('');w.append(g);
+  if(np&&more){
+    const b=document.createElement('button');b.className='btn wide';b.textContent='Tải thêm';
+    b.onclick=async()=>{b.disabled=true;try{const r=await more(np);g.insertAdjacentHTML('beforeend',r.items.map(item).join(''));np=r.np;if(!np)b.remove();else b.disabled=false}catch(e){b.disabled=false;b.textContent='Lỗi, bấm để thử lại'}};
+    w.append(b);
+  }
+  return w;
+}
+const load=()=>app.innerHTML='<div class="msg">Đang tải…</div>';
+function fail(e,retry){app.innerHTML=`<div class="msg">${esc(e.message||'Có lỗi xảy ra')}<br><button class="btn">Thử lại</button></div>`;app.querySelector('button').onclick=retry}
+function empty(t){app.innerHTML=`<div class="msg">${t}</div>`}
+
+async function home(){
+  load();
+  try{const j=await api('/trending?region=VN');app.innerHTML='<h2>Thịnh hành</h2>';app.append(list(j,null))}catch(e){fail(e,home)}
+}
+async function search(q){
+  $('#q').value=q;load();
+  try{
+    const j=await api('/search?q='+encodeURIComponent(q)+'&filter=all');
+    app.innerHTML='';
+    app.append(list(j.items||[],j.nextpage,np=>api('/nextpage/search?nextpage='+encodeURIComponent(np)+'&q='+encodeURIComponent(q)+'&filter=all').then(r=>({items:r.items||[],np:r.nextpage}))));
+  }catch(e){fail(e,()=>search(q))}
+}
+async function channel(id){
+  load();
+  try{
+    const d=await api('/channel/'+id);
+    const subs=LS.get('subs',[]);let on=subs.some(s=>s.id===id);
+    app.innerHTML=`<div class="chead"><img class="av" src="${esc(d.avatarUrl)}"><div style="flex:1;min-width:0"><div class="t">${esc(d.name)}</div><div class="s">${d.subscriberCount>0?fmtN(d.subscriberCount)+' người đăng ký':''}</div></div><div style="display:flex;flex-direction:column;gap:6px"><button class="btn on" id="lq">Nghe tất cả</button><button class="btn" id="sb"></button></div></div>`;
+    const sb=$('#sb');
+    const paint=()=>{sb.textContent=on?'Đã đăng ký':'Đăng ký';sb.className='btn'+(on?'':' on')};paint();
+    sb.onclick=()=>{let s=LS.get('subs',[]);if(on)s=s.filter(x=>x.id!==id);else s.push({id,name:d.name,avatar:d.avatarUrl});LS.set('subs',s);on=!on;paint()};
+    $('#lq').onclick=()=>{unlock();const g=app.querySelector('.grid');if(g)playQ(cardsQ(g),0)};
+    app.append(list(d.relatedStreams||[],d.nextpage,np=>api('/nextpage/channel/'+id+'?nextpage='+encodeURIComponent(np)).then(r=>({items:r.relatedStreams||[],np:r.nextpage}))));
+  }catch(e){fail(e,()=>channel(id))}
+}
+async function subsPage(){
+  const subs=LS.get('subs',[]);
+  if(!subs.length)return empty('Bạn chưa đăng ký kênh nào.<br>Mở một kênh rồi bấm Đăng ký.');
+  app.innerHTML='<div class="chips">'+subs.map(s=>`<a href="#/channel/${esc(s.id)}"><img class="av" src="${esc(s.avatar)}">${esc(s.name)}</a>`).join('')+'</div><div class="msg">Đang tải video mới…</div>';
+  try{
+    const j=await api('/feed/unauthenticated?channels='+subs.slice(0,50).map(s=>s.id).join(','));
+    app.querySelector('.msg').replaceWith(list(j,null));
+  }catch(e){app.querySelector('.msg').innerHTML=esc(e.message)}
+}
+function historyPage(){
+  const h=LS.get('hist',[]);
+  if(!h.length)return empty('Chưa có video nào trong lịch sử.');
+  app.innerHTML='<button class="btn" id="clr">Xóa lịch sử</button><div style="height:14px"></div>';
+  $('#clr').onclick=()=>{if(confirm('Xóa toàn bộ lịch sử xem?')){LS.set('hist',[]);historyPage()}};
+  app.append(list(h,null));
+}
+function settings(){
+  app.innerHTML=`<h2>Máy chủ Piped</h2><div class="s" style="margin-bottom:8px">Mỗi dòng một địa chỉ API. App thử lần lượt từ trên xuống.</div><textarea id="ins">${esc(inst.join('\n'))}</textarea><div class="ctl"><button class="btn on" id="sv">Lưu</button><button class="btn" id="up">Lấy danh sách mới</button><button class="btn" id="rs">Mặc định</button></div><div class="s" id="st"></div><h2 style="margin-top:20px">Phát video</h2><label class="chk"><input type="checkbox" id="au"> Tự phát video tiếp theo</label>`;
+  const save=l=>{inst=l.length?l:DEF;LS.set('inst',inst);$('#ins').value=inst.join('\n')};
+  $('#sv').onclick=()=>{save($('#ins').value.split('\n').map(x=>x.trim().replace(/\/$/,'')).filter(x=>/^https?:\/\//.test(x)));$('#st').textContent='Đã lưu.'};
+  $('#rs').onclick=()=>{save(DEF);$('#st').textContent='Đã đặt lại.'};
+  $('#up').onclick=async()=>{
+    $('#st').textContent='Đang lấy…';
+    try{
+      const r=await fetch('https://piped-instances.kavin.rocks/');const j=await r.json();
+      const n=j.map(x=>x.api_url).filter(Boolean).slice(0,8);
+      save([...new Set([...n,...DEF])]);$('#st').textContent='Đã cập nhật '+n.length+' máy chủ.';
+    }catch(e){$('#st').textContent='Không lấy được danh sách. Thử lại sau.'}
+  };
+  const au=$('#au');au.checked=LS.get('auto',false);au.onchange=()=>LS.set('auto',au.checked);
+}
+
+async function watch(id){
+  load();
+  let d;try{d=await api('/streams/'+id)}catch(e){return fail(e,()=>watch(id))}
+  const cid=(d.uploaderUrl||'').replace('/channel/','');
+  const vs=(d.videoStreams||[]).filter(s=>!s.videoOnly&&/mp4/.test(s.mimeType||'')).sort((a,b)=>b.height-a.height);
+  const au=(d.audioStreams||[]).filter(s=>/mp4/.test(s.mimeType||'')).sort((a,b)=>b.bitrate-a.bitrate)[0];
+  const opts=vs.map(s=>({k:s.url,l:s.quality}));
+  if(d.hls)opts.push({k:d.hls,l:'Tự động (HLS)'});
+  if(au)pre[id]=Promise.resolve(au.url);
+  const def=(vs.find(s=>s.height<=720)||vs[0]);
+  const start=def?def.url:(d.hls||(au&&au.url)||'');
+  const rel=d.relatedStreams||[];
+  app.innerHTML=`<div class="watch"><div><video id="pl" controls playsinline autoplay poster="${esc(d.thumbnailUrl)}"></video>
+  <div class="ttl">${esc(d.title)}</div>
+  <div class="s">${d.views>=0?fmtN(d.views)+' lượt xem':''}${d.uploadDate?' · '+esc(d.uploadDate):''}</div>
+  <div class="who"><img class="av" src="${esc(d.uploaderAvatar)}"><a href="#/channel/${esc(cid)}"><div class="t">${esc(d.uploader)}</div><div class="s">${d.uploaderSubscriberCount>0?fmtN(d.uploaderSubscriberCount)+' người đăng ký':''}</div></a><button class="btn" id="sb"></button></div>
+  <div class="ctl"><select id="ql">${opts.map(o=>`<option value="${esc(o.k)}"${o.k===start?' selected':''}>${esc(o.l)}</option>`).join('')}</select>
+  <select id="sp">${[0.5,0.75,1,1.25,1.5,2].map(x=>`<option value="${x}"${x===1?' selected':''}>${x}x</option>`).join('')}</select>
+  <button class="btn on" id="bg">Nghe nền</button><button class="btn" id="pip">Hình trong hình</button></div>
+  <div class="desc" id="ds"></div></div>
+  <div class="side"><h2>Video liên quan</h2><div id="rl"></div></div></div>`;
+  const pl=$('#pl');
+  pl.onplay=()=>{if(!ap.paused)ap.pause()};
+  $('#bg').onclick=()=>{unlock();pl.pause();playQ([{id,t:d.title,u:d.uploader,th:d.thumbnailUrl},...rel.filter(r=>vid(r.url)).map(r=>({id:vid(r.url),t:r.title,u:r.uploaderName,th:r.thumbnail}))],0)};
+  pl.src=start;pl.play().catch(()=>{});
+  $('#ql').onchange=e=>{const t=pl.currentTime,p=pl.paused;pl.src=e.target.value;pl.addEventListener('loadedmetadata',()=>{if(t)pl.currentTime=t;pl.playbackRate=+$('#sp').value},{once:true});if(!p)pl.play().catch(()=>{})};
+  $('#sp').onchange=e=>pl.playbackRate=+e.target.value;
+  const pip=$('#pip');
+  if(document.pictureInPictureEnabled)pip.onclick=()=>document.pictureInPictureElement?document.exitPictureInPicture():pl.requestPictureInPicture().catch(()=>{});
+  else if(pl.webkitSupportsPresentationMode&&pl.webkitSupportsPresentationMode('picture-in-picture'))pip.onclick=()=>pl.webkitSetPresentationMode('picture-in-picture');
+  else pip.remove();
+  const tmp=document.createElement('div');tmp.innerHTML=(d.description||'').replace(/<br\s*\/?>/gi,'\n');
+  const ds=$('#ds');ds.textContent=tmp.textContent||'Không có mô tả.';ds.onclick=()=>ds.classList.toggle('open');
+  const sb=$('#sb');let on=LS.get('subs',[]).some(s=>s.id===cid);
+  const paint=()=>{sb.textContent=on?'Đã đăng ký':'Đăng ký';sb.className='btn'+(on?'':' on')};paint();
+  sb.onclick=()=>{let s=LS.get('subs',[]);if(on)s=s.filter(x=>x.id!==cid);else s.push({id:cid,name:d.uploader,avatar:d.uploaderAvatar});LS.set('subs',s);on=!on;paint()};
+  $('#rl').append(list(rel.filter(r=>r.type==='stream'||vid(r.url)),null));
+  let h=LS.get('hist',[]).filter(x=>vid(x.url)!==id);
+  h.unshift({url:'/watch?v='+id,title:d.title,thumbnail:d.thumbnailUrl,uploaderName:d.uploader,duration:d.duration,views:d.views});
+  LS.set('hist',h.slice(0,200));
+  if('mediaSession' in navigator){
+    navigator.mediaSession.metadata=new MediaMetadata({title:d.title,artist:d.uploader,artwork:[{src:d.thumbnailUrl}]});
+  }
+  pl.onended=()=>{if(LS.get('auto',false)){const n=rel.find(r=>vid(r.url));if(n)location.hash='#/watch/'+vid(n.url)}};
+}
+
+/* ===== Phát nền (chỉ âm thanh) ===== */
+const ap=$('#ap'),SIL='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
+let Q=[],qi=0,pre={},real='',unl=false,drag=false,retry=false;
+const MS='mediaSession' in navigator;
+const cardsQ=g=>[...g.querySelectorAll('.card')].map(c=>({id:c.dataset.id,t:c.dataset.t,u:c.dataset.u,th:c.dataset.th}));
+const bestA=d=>{const a=d.audioStreams||[];return(a.filter(s=>/mp4|m4a/.test(s.mimeType||'')).sort((x,y)=>y.bitrate-x.bitrate)[0]||a[0]||{}).url};
+const getUrl=id=>pre[id]||(pre[id]=api('/streams/'+id).then(d=>{const u=bestA(d);if(!u)throw new Error('x');return u}).catch(e=>{delete pre[id];throw e}));
+function unlock(){if(unl)return;unl=true;ap.src=SIL;ap.play().catch(()=>{})}
+function meta(t){if(MS)navigator.mediaSession.metadata=new MediaMetadata({title:t.t,artist:t.u||'',artwork:t.th?[{src:t.th}]:[]})}
+function playQ(q,i){Q=q;return playAt(i)}
+async function playAt(i){
+  if(i<0||i>=Q.length)return;
+  qi=i;const t=Q[i];
+  $('#mp').hidden=false;document.body.classList.add('hasp');
+  $('#mpn').textContent=t.t;$('#mps').textContent='Đang tải…';$('#mpr').value=0;meta(t);
+  try{
+    const u=await getUrl(t.id);if(qi!==i)return;
+    ap.src=u;real=ap.src;await ap.play();
+    $('#mps').textContent=t.u||'';
+  }catch(e){if(qi===i)$('#mps').textContent='Chưa phát được. Bấm ▶︎ hoặc ⏭︎ để bỏ qua.';return}
+  if(Q[i+1])getUrl(Q[i+1].id).catch(()=>{});
+}
+const nxt=()=>playAt(qi+1),prv=()=>{if(ap.currentTime>5)ap.currentTime=0;else playAt(qi-1)};
+$('#mpv').onclick=prv;$('#mpx').onclick=nxt;
+$('#mpp').onclick=()=>ap.paused?ap.play().catch(()=>{}):ap.pause();
+$('#mpc').onclick=()=>{ap.pause();real='';ap.removeAttribute('src');ap.load();Q=[];$('#mp').hidden=true;document.body.classList.remove('hasp')};
+ap.onended=()=>{if(real&&ap.src===real)playAt(qi+1)};
+ap.onplaying=()=>{retry=false};
+ap.onerror=()=>{if(!real||ap.src!==real)return;if(!retry&&Q[qi]){retry=true;delete pre[Q[qi].id];playAt(qi)}else{retry=false;playAt(qi+1)}};
+ap.onplay=ap.onpause=()=>{$('#mpp').textContent=ap.paused?'▶︎':'⏸︎';if(MS)navigator.mediaSession.playbackState=ap.paused?'paused':'playing'};
+ap.ontimeupdate=()=>{
+  if(!real||ap.src!==real)return;const d=ap.duration;if(!isFinite(d)||!d)return;
+  if(!drag)$('#mpr').value=ap.currentTime/d*1000;
+  if(MS&&navigator.mediaSession.setPositionState){try{navigator.mediaSession.setPositionState({duration:d,position:Math.min(ap.currentTime,d),playbackRate:ap.playbackRate||1})}catch(e){}}
+};
+const mpr=$('#mpr');mpr.oninput=()=>{drag=true};mpr.onchange=()=>{drag=false;if(isFinite(ap.duration))ap.currentTime=mpr.value/1000*ap.duration};
+if(MS){const m=navigator.mediaSession,h=(a,f)=>{try{m.setActionHandler(a,f)}catch(e){}};
+  h('play',()=>ap.play());h('pause',()=>ap.pause());h('previoustrack',prv);h('nexttrack',nxt);h('seekto',e=>{ap.currentTime=e.seekTime})}
+document.addEventListener('click',e=>{
+  const b=e.target.closest('.lis');if(!b)return;
+  e.preventDefault();e.stopPropagation();unlock();
+  const card=b.closest('.card');playQ(cardsQ(card.closest('.grid')),[...card.closest('.grid').querySelectorAll('.card')].indexOf(card));
+},true);
+
+function route(){
+  const [a,...r]=(location.hash.slice(2)||'').split('/'),arg=decodeURIComponent(r.join('/'));
+  document.querySelectorAll('nav a').forEach(x=>x.classList.toggle('on',x.dataset.p===a));
+  window.scrollTo(0,0);
+  if(a==='search')search(arg);
+  else if(a==='watch')watch(arg);
+  else if(a==='channel')channel(arg);
+  else if(a==='subs')subsPage();
+  else if(a==='history')historyPage();
+  else if(a==='settings')settings();
+  else home();
+}
+$('#sf').onsubmit=e=>{e.preventDefault();const q=$('#q').value.trim();if(q){$('#q').blur();location.hash='#/search/'+encodeURIComponent(q)}};
+addEventListener('hashchange',route);
+route();
+</script>
+</body>
+</html>
