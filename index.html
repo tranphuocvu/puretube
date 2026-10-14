@@ -171,7 +171,7 @@ async function search(q){
 async function channel(id){
   load();
   try{
-    const d=await api('/channel/'+id);
+    const H=homeCfg();let d;try{d=await api('/channel/'+id)}catch(e){if(!H)throw e;d={name:'Kênh',avatarUrl:'',tabs:[]}}
     const subs=LS.get('subs',[]);let on=subs.some(s=>s.id===id);
     app.innerHTML=`<div class="chead"><img class="av" src="${esc(d.avatarUrl)}"><div style="flex:1;min-width:0"><div class="t">${esc(d.name)}</div><div class="s">${d.subscriberCount>0?fmtN(d.subscriberCount)+' người đăng ký':''}</div></div><div style="display:flex;flex-direction:column;gap:6px"><button class="btn on" id="lq">Nghe tất cả</button><button class="btn" id="sb"></button></div></div>`;
     const sb=$('#sb');
@@ -179,21 +179,22 @@ async function channel(id){
     sb.onclick=()=>{let s=LS.get('subs',[]);if(on)s=s.filter(x=>x.id!==id);else s.push({id,name:d.name,avatar:d.avatarUrl});LS.set('subs',s);on=!on;paint()};
     $('#lq').onclick=()=>{unlock();const g=app.querySelector('.grid');if(g)playQ(cardsQ(g),0)};
     SHORTS=false;
-    const tabs=(d.tabs||[]).filter(t=>/^(videos|livestreams|shorts)$/i.test(t.name));
+    const tabs=H?[{name:'videos',h:'videos'},{name:'livestreams',h:'streams'},{name:'shorts',h:'shorts'}]:(d.tabs||[]).filter(t=>/^(videos|livestreams|shorts)$/i.test(t.name));
     const lab={videos:'Video',livestreams:'Trực tiếp',shorts:'Shorts'};
     const chips=document.createElement('div'),holder=document.createElement('div');
     chips.className='ctl';app.append(chips,holder);
     const more=np=>api('/nextpage/channel/'+id+'?nextpage='+encodeURIComponent(np)).then(r=>({items:r.relatedStreams||r.content||[],np:r.nextpage}));
+    const hl=(tab,st)=>fetch(hu(H,'/channel/'+id+'?tab='+tab+'&start='+st)).then(r=>r.json()).then(j=>{if(j.error)throw new Error(j.error);return j});
     async function show(tb){
       chips.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b._t===tb));
       SHORTS=!!(tb&&/shorts/i.test(tb.name));
       holder.innerHTML='<div class="msg">Đang tải…</div>';
-      let items=[],np0=null;
-      try{if(tb){const r=await api('/channels/tabs?data='+encodeURIComponent(tb.data));items=r.content||[];np0=r.nextpage}else{items=d.relatedStreams||[];np0=d.nextpage}}catch(e){}
+      let items=[],np0=null,er='';
+      try{if(H&&tb){const j=await hl(tb.h,1);items=j.items;np0=items.length>=30?31:null}else if(tb){const r=await api('/channels/tabs?data='+encodeURIComponent(tb.data));items=r.content||[];np0=r.nextpage}else{items=d.relatedStreams||[];np0=d.nextpage}}catch(e){er=e.message||''}
       if(items.length&&items.every(v=>v.uploaded>0))items.sort((a,b)=>b.uploaded-a.uploaded);
       holder.innerHTML='';
-      if(!items.filter(v=>v.url&&(!v.isShort||SHORTS)).length){holder.innerHTML='<div class="msg">Không có video nào.<br>Thử lại hoặc chọn mục khác.</div>';return}
-      holder.append(list(items,np0,more));
+      if(!items.filter(v=>v.url&&(!v.isShort||SHORTS)).length){holder.innerHTML='<div class="msg">Không có video nào.<br>'+esc(er)+'</div>';return}
+      holder.append(list(items,np0,H&&tb?(np=>hl(tb.h,np).then(j=>({items:j.items,np:j.items.length>=30?np+30:null}))):more));
     }
     tabs.forEach(t=>{const b=document.createElement('button');b.className='btn';b._t=t;b.textContent=lab[t.name.toLowerCase()]||t.name;b.onclick=()=>show(t);chips.append(b)});
     show(tabs.find(t=>/^videos$/i.test(t.name))||tabs[0]||null);
